@@ -1,17 +1,17 @@
 let world;
 let camera;
 let drawnObjects = [];
-let noGoAngles  = [];
+let polygons = [];
+let noGoAngles = [];
 
 function setup()
 {
   createCanvas(windowWidth, windowHeight);
   world = new worldConstants();
-  camera = new Camera(PI / 3, 30);
+  camera = new Camera(PI / 5, 30);
   noStroke();
-  new cube3D(5, -1, -1, 10, 10, 10);
-  new cube3D(5, 5, 5, 10, 1, 10);
-  new cube3D(5, -20, 5, 10, 1, 10);
+  new cube3D(5, 5, 5, 20, 20, 20);
+  //new polygon3D(new pose3D(1, 1, 1), new pose3D(1, 2, 1), new pose3D(1, 1, 2));
 }
 
 function draw()
@@ -20,7 +20,8 @@ function draw()
   camera.control();
 }
 
-function mousePressed(){
+function mousePressed()
+{
   requestPointerLock();
 }
 
@@ -61,17 +62,21 @@ class Camera
         newAng.rotateBy(xRot, yRot);
         this.xs.push(x * this.resolution);
         this.ys.push(y * this.resolution);
-        this.rays.push(new rayCast(this.position, newAng, 0.5, 50));
+        this.rays.push(new rayCast(this.position, newAng, 1, 25));
       }
     }
   }
   updateScreen()
   {
+    background(100);
     for (let i = 0; i < this.rays.length; i++)
     {
       let fillColor = this.rays[i].cast();
-      fill(fillColor);
-      square(this.xs[i], this.ys[i], this.resolution);
+      if (fillColor != false)
+      {
+        fill(fillColor);
+        square(this.xs[i], this.ys[i], this.resolution);
+      }
       //fill(255);
       //stroke(0);
       //textSize(10);
@@ -80,7 +85,7 @@ class Camera
   }
   control()
   {
-    let speed = 0.1;
+    let speed = 1;
     if (keyIsDown(87)) this.moveLocal(speed, 0, 0);
     if (keyIsDown(83)) this.moveLocal(-speed, 0, 0);
     if (keyIsDown(65)) this.moveLocal(0, 0, -speed);
@@ -88,12 +93,12 @@ class Camera
     if (keyIsDown(32)) this.move(0, -speed, 0);
     if (keyIsDown(16)) this.move(0, speed, 0);
 
-    let mouseDampening = 30;
+    let mouseDampening = 80;
     this.rotateBy(movedX / mouseDampening, movedY / mouseDampening);
   }
   rotateBy(y, z)
   {
-    if(this.forward.zRot + z > (3/2)*PI || this.forward.zRot + z < -(3/2)*PI) z = 0;
+    if (this.forward.zRot + z > (3 / 2) * PI || this.forward.zRot + z < -(3 / 2) * PI) z = 0;
     this.forward.rotateBy(y, z);
     for (let i = 0; i < this.rays.length; i++)
     {
@@ -117,7 +122,7 @@ class Camera
     zMove += x * v.z;
 
     // rotate forward to be right so positive = right, -= left
-    this.forward.rotateBy(PI/2, 0);
+    this.forward.rotateBy(PI / 2, 0);
 
     v = this.forward.getVector();
     // apply the local left movement
@@ -126,7 +131,7 @@ class Camera
     zMove += z * v.z;
 
     // rotate forward to be down so down = up, -= up
-    this.forward.rotateBy(-PI/2, PI/2);
+    this.forward.rotateBy(-PI / 2, PI / 2);
 
     v = this.forward.getVector();
     // apply the local left movement
@@ -135,7 +140,7 @@ class Camera
     zMove += y * v.z;
 
     // reset forward to forward
-    this.forward.rotateBy(0, -PI/2);
+    this.forward.rotateBy(0, -PI / 2);
 
     // apply local movement
     this.move(xMove, 0, zMove);
@@ -162,7 +167,7 @@ class direction
   {
     let xValue = cos(this.yRot);
     let zValue = cos(this.yRot + PI / 2);
-    let yValue = this.zRot/(PI/3.3);
+    let yValue = this.zRot / (PI / 3.3);
     return createVector(xValue, yValue, zValue);
   }
   rotateBy(y, z)
@@ -188,18 +193,20 @@ class rayCast
   }
   cast()
   {
+    /*
     this.curPos = this.startPos.copy();
     let samples = 0;
 
     while (samples < this.maxSamples)
     {
       // itterate over objects to see what is drawn
-      for (let i = 0; i < drawnObjects.length; i++)
+      for (let i = 0; i < objsToCheck.length; i++)
       {
-        if (drawnObjects[i].isPointColiding(this.curPos.x, this.curPos.y, this.curPos.z) == true)
+        if (objsToCheck[i].isPointColiding(this.curPos.x, this.curPos.y, this.curPos.z) == true)
         {
-          //if(drawnObjects[i].isPointOnBorder(this.curPos.x, this.curPos.y, this.curPos.z) == true) return 200;
-          return color(drawnObjects[i].fillColor[0] / (samples/10), drawnObjects[i].fillColor[1] / (samples/10), drawnObjects[i].fillColor[2] / (samples/10));
+          //if (objsToCheck[i].isPointOnBorder(this.curPos.x, this.curPos.y, this.curPos.z) == true) return 200;
+          //return color(objsToCheck[i].fillColor[0] / (samples / 50), objsToCheck[i].fillColor[1] / (samples / 50), objsToCheck[i].fillColor[2] / (samples / 50));
+          return color(drawnObjects[i].fillColor[0], drawnObjects[i].fillColor[1], drawnObjects[i].fillColor[2]);
         }
       }
       // move the step forward
@@ -209,7 +216,102 @@ class rayCast
       this.curPos.z += v.z * this.sampleSize;
       samples++;
     }
-    return color(0, 0, 0);
+    return false;
+    */
+    for (let i = 0; i < polygons.length; i++)
+    {
+      if (polygons[i].isLineColiding(this.startPos.toVector(), this.direction.getVector())) return polygons[i].fillColor
+    }
+    return false
+  }
+}
+
+class polygon3D
+{
+  constructor(pose1, pose2, pose3)
+  {
+    this.pose1 = pose1.copy();
+    this.pose2 = pose2.copy();
+    this.pose3 = pose3.copy();
+
+    this.centerPose = this.getCenter();
+    this.normal = this.getNormal();
+
+    this.fillColor = color(random(0, 255), random(0, 255), random(0, 255));
+
+    polygons.push(this);
+  }
+  getCenter()
+  {
+    let xPos = (this.pose1.x + this.pose2.x + this.pose3.x) / 3;
+    let yPos = (this.pose1.y + this.pose2.y + this.pose3.y) / 3;
+    let zPos = (this.pose1.z + this.pose2.z + this.pose3.z) / 3;
+    return new pose3D(xPos, yPos, zPos);
+  }
+  getNormal()
+  {
+    let v1 = this.pose2.sub(this.pose1);
+    let v2 = this.pose3.sub(this.pose1);
+
+    let xValue = v1.y * v2.z - v1.z * v2.y;
+    let yValue = v1.z * v2.x - v1.x * v2.z;
+    let zValue = v1.x * v2.y - v1.y * v2.x;
+
+    return createVector(xValue, yValue, zValue);
+  }
+  // All coppied from https://www.graphics.cornell.edu/pubs/1997/MT97.pdf
+  isLineColiding(pose1, direction)
+  {
+    // convert pose objects into vectors
+    let p1 = this.pose1.toVector();
+    let p2 = this.pose2.toVector();
+    let p3 = this.pose3.toVector();
+
+    // find vectors for edges sharing position 1
+    let edge1 = p2.sub(p1);
+    let edge2 = p3.sub(p1);
+    // calculate determinnant no idea what that means
+
+    let pvec = direction.cross(edge2);
+
+    let det = edge1.dot(pvec);
+
+    if (det < 0.000001) return 0;
+
+    let tvec = pose1.sub(p1);
+
+    let u = tvec.dot(pvec);
+    if (u < 0 || u > det) return 0;
+
+    let qvec = tvec.cross(edge1);
+
+    let v = direction.dot(qvec);
+    if (v < 0 || u + v > det) return 0;
+
+    let t = edge2.dot(qvec);
+
+    let invDet = 1 / det;
+
+    t *= invDet;
+    u *= invDet;
+    v *= invDet;
+    return true;
+    /* culling functions
+   if(det > -0.000001 && det < 0.000001) return false;
+
+   let invDet = 1/det;
+   let tvec = pose1.sub(p1);
+
+   let u = tvec.dot(pvec) * invDet;
+   if(u < 0 || u > 1) return false;
+
+  let qvec = tvec.cross(edge1);
+
+  let v = direction.dot(qvec) * invDet;
+  if(v < 0 || u + v > 1) return false;
+  
+  return true
+    */
   }
 }
 
@@ -224,22 +326,40 @@ class cube3D
     this.h = h;
     this.l = l;
 
-    this.centerPos = new pose3D(this.x + this.w/2, this.y + this.h/2, this.z + this.l/2);
+    this.centerPos = new pose3D(this.x + this.w / 2, this.y + this.h / 2, this.z + this.l / 2);
 
-    this.fillColor = [random(0, 255), random(0, 255), random(0, 255)]
-    drawnObjects.push(this);
+    this.fillColor = [random(0, 255), random(0, 255), random(0, 255)];
+
+    let c1 = new pose3D(this.x, this.y, this.z);
+    let c2 = new pose3D(this.x + this.w, this.y, this.z);
+    let c3 = new pose3D(this.x + this.w, this.y + this.h, this.z);
+    let c4 = new pose3D(this.x, this.y + this.h, this.z);
+
+    let c5 = new pose3D(this.x, this.y, this.z + this.l);
+    let c6 = new pose3D(this.x + this.w, this.y, this.z + this.l);
+    let c7 = new pose3D(this.x + this.w, this.y + this.h, this.z + this.l);
+    let c8 = new pose3D(this.x, this.y + this.h, this.z + this.l);
+
+
+    constructFace(c1, c2, c3, c4, true); // "Back"
+    constructFace(c1, c5, c8, c4); // "Left"
+    constructFace(c5, c6, c7, c8); // "Front"
+    constructFace(c6, c2, c3, c7); // "Right"
+    constructFace(c1, c2, c6, c5); // "Top"
+    constructFace(c4, c3, c7, c8, true); // "Bottom"
   }
   isPointColiding(x, y, z)
   {
     return (x > this.x - 1 && x < this.x + this.w + 1 && y > this.y - 1 && y < this.y + this.h + 1 && z > this.z - 1 && z < this.z + this.l + 1);
   }
-  isPointOnBorder(x, y, z){
+  isPointOnBorder(x, y, z)
+  {
     let total = 0;
-    if(dist(x, 0, this.centerPos.x, 0) >= this.w/2 - 0.1) total ++;
-    if(dist(y, 0, this.centerPos.y, 0) >= this.h/2 - 0.1) total ++;
-    if(dist(z, 0, this.centerPos.z, 0) >= this.l/2 - 0.1) total ++;
-    
-    if(total >=2) return true;
+    if (dist(x, 0, this.centerPos.x, 0) >= this.w / 2 - 0.1) total++;
+    if (dist(y, 0, this.centerPos.y, 0) >= this.h / 2 - 0.1) total++;
+    if (dist(z, 0, this.centerPos.z, 0) >= this.l / 2 - 0.1) total++;
+
+    if (total >= 2) return true;
     return false;
   }
 }
@@ -264,8 +384,60 @@ class pose3D
     this.y += y;
     this.z += z;
   }
+  distFrom(pose)
+  {
+    return (tDist(this.x, pose.x) + tDist(this.y, pose.y) + tDist(this.z, pose.z));
+  }
+  // same functionality as distFrom but returns in vector format
+  vectorDistFrom(pose)
+  {
+    return createVector(tDist(this.x, pose.x), tDist(this.y, pose.y), tDist(this.z, pose.z));
+  }
+  add(pose)
+  {
+    return new pose3D(this.x + pose.x, this.y + pose.y, this.z + pose.z);
+  }
+  sub(pose)
+  {
+    return new pose3D(this.x - pose.x, this.y - pose.y, this.z - pose.z);
+  }
+  toVector()
+  {
+    return createVector(this.x, this.y, this.z);
+  }
   copy()
   {
     return new pose3D(this.x, this.y, this.z)
+  }
+}
+
+function tDist(x, x2)
+{
+  if (x > x2) return -dist(x, 0, x2, 0);
+  return dist(x, 0, x2, 0);
+}
+
+function vectorToPose(vec)
+{
+  return new pose3D(vec.x, vec.y, vec.z);
+}
+
+function totalValue(vec)
+{
+  return vec.x + vec.y + vec.z;
+}
+
+// 1 = top left, 2 = top right, 3 = bottom right, 4 = bottom right
+function constructFace(corner1, corner2, corner3, corner4, constructReverse)
+{
+  if (constructReverse == undefined || constructReverse == false)
+  {
+    new polygon3D(corner1, corner2, corner3);
+    new polygon3D(corner1, corner3, corner4);
+  }
+  else
+  {
+    new polygon3D(corner3, corner2, corner1);
+    new polygon3D(corner4, corner3, corner1);
   }
 }
