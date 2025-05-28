@@ -10,10 +10,6 @@ let resSlider;
 let canMove = false;
 let doBorders = false;
 
-function preload(){
-  elon = loadImage("Assets/Elon Musk.png");
-}
-
 function setup()
 {
   createCanvas(windowWidth, windowHeight);
@@ -322,8 +318,6 @@ class cube3D
     this.centerPos = new pose3D(this.x + this.w / 2, this.y + this.h / 2, this.z + this.l / 2);
     background(0);
     
-    elon.loadPixels();
-    this.fillImage = elon.pixels;
     this.fillColor = [random(0, 255), random(0, 255), random(0, 255)];
 
     let c1 = new pose3D(this.x, this.y, this.z);
